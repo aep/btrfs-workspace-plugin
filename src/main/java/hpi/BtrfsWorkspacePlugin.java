@@ -25,36 +25,36 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
 public class BtrfsWorkspacePlugin extends BuildWrapper {
-	private String baseVolume;
-	private boolean destroyAfterBuild;
-	private String[] copiedFiles;
+    private String baseVolume;
+    private boolean destroyAfterBuild;
+    private String[] copiedFiles;
 
-	private static final Logger log = Logger.getLogger(BtrfsWorkspacePlugin.class.getName()); 
+    private static final Logger log = Logger.getLogger(BtrfsWorkspacePlugin.class.getName());
 
-	@DataBoundConstructor
+    @DataBoundConstructor
     public BtrfsWorkspacePlugin(String baseVolume, boolean destroyAfterBuild) {
-		this.baseVolume = baseVolume;
-		this.destroyAfterBuild = destroyAfterBuild;
+        this.baseVolume = baseVolume;
+        this.destroyAfterBuild = destroyAfterBuild;
     }
 
     public String getBaseVolume() {
-		return baseVolume;
-	}
+        return baseVolume;
+    }
 
-	public boolean getDestroyAfterBuild() {
-		return destroyAfterBuild;
-	}
+    public boolean getDestroyAfterBuild() {
+        return destroyAfterBuild;
+    }
 
-	@Override
-	public Environment setUp(AbstractBuild build, final Launcher launcher,
-			BuildListener listener) throws IOException, InterruptedException 
-	{
-		FilePath projectWorkspace = build.getWorkspace();
+    @Override
+    public Environment setUp(AbstractBuild build, final Launcher launcher,
+            BuildListener listener) throws IOException, InterruptedException
+    {
+        FilePath projectWorkspace = build.getWorkspace();
 
-		Hudson hudson = Hudson.getInstance();
-		FilePath hudsonRoot = hudson.getRootPath();
+        Hudson hudson = Hudson.getInstance();
+        FilePath hudsonRoot = hudson.getRootPath();
 
-		FilePath copyFrom = new FilePath(hudsonRoot, baseVolume);
+        FilePath copyFrom = new FilePath(hudsonRoot, baseVolume);
 
         //maybe a leftover
         launcher.launch().cmds("btrfs", "subvolume", "delete", projectWorkspace.toString()).masks(true).join();
@@ -69,19 +69,19 @@ public class BtrfsWorkspacePlugin extends BuildWrapper {
             return null;
         }
 
-		return new Environment() {
-			@Override
-			public boolean tearDown(AbstractBuild build, BuildListener listener)
-					throws IOException, InterruptedException {
-				if (destroyAfterBuild) {
-					FilePath projectWorkspace = build.getWorkspace();
+        return new Environment() {
+            @Override
+            public boolean tearDown(AbstractBuild build, BuildListener listener)
+            throws IOException, InterruptedException {
+            if (destroyAfterBuild) {
+                FilePath projectWorkspace = build.getWorkspace();
 
-                    launcher.launch().cmds("btrfs", "subvolume", "delete", projectWorkspace.toString()).join();
-				}
-				return true;
-			}
-		};
-	}
+                launcher.launch().cmds("btrfs", "subvolume", "delete", projectWorkspace.toString()).join();
+            }
+            return true;
+            }
+        };
+    }
 
     @Override
     public Environment setUp(Build build, Launcher launcher, BuildListener listener) throws IOException, InterruptedException {
@@ -113,7 +113,7 @@ public class BtrfsWorkspacePlugin extends BuildWrapper {
                     return FormValidation.error("Does not exist.");
             } catch (java.lang.InterruptedException e) {
             }
-        	return FormValidation.ok();
+            return FormValidation.ok();
         }
 
         @Override
