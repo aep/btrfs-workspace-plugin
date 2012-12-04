@@ -57,18 +57,17 @@ public class BtrfsWorkspacePlugin extends BuildWrapper {
 		FilePath copyFrom = new FilePath(hudsonRoot, baseVolume);
 
         //maybe a leftover
-        ProcStarter ps = launcher.new ProcStarter();
-        ps.cmds("btrfs", "subvolume", "delete", projectWorkspace.toString());
-        Proc proc = launcher.launch(ps);
-        proc.join();
+        launcher.launch().cmds("btrfs", "subvolume", "delete", projectWorkspace.toString()).masks(true).join();
 
         //delete the directory
         projectWorkspace.deleteRecursive();
 
-        ps = launcher.new ProcStarter();
-        ps.cmds("btrfs", "subvolume", "snapshot", copyFrom.toString(), projectWorkspace.toString());
-        proc = launcher.launch(ps);
-        int retcode = proc.join();
+        int retcode = launcher.launch().cmds(
+                "btrfs", "subvolume", "snapshot", copyFrom.toString(), projectWorkspace.toString()
+                ).stdout(listener).join();
+        if (retcode != 0) {
+            return null;
+        }
 
 		return new Environment() {
 			@Override
@@ -77,10 +76,7 @@ public class BtrfsWorkspacePlugin extends BuildWrapper {
 				if (destroyAfterBuild) {
 					FilePath projectWorkspace = build.getWorkspace();
 
-                    ProcStarter ps = launcher.new ProcStarter();
-                    ps.cmds("btrfs", "subvolume", "delete", projectWorkspace.toString());
-                    Proc proc = launcher.launch(ps);
-                    proc.join();
+                    launcher.launch().cmds("btrfs", "subvolume", "delete", projectWorkspace.toString()).join();
 				}
 				return true;
 			}
@@ -106,9 +102,16 @@ public class BtrfsWorkspacePlugin extends BuildWrapper {
             return items;
         }
 
-        public FormValidation doCheckFolderPath(@AncestorInPath AbstractProject project, @QueryParameter String value) throws IOException {
-            if (0 == value.length()) {
-            	return FormValidation.error("Cannot be empty");
+        public FormValidation doCheckBaseVolume(@AncestorInPath AbstractProject project, @QueryParameter String value) throws IOException {
+
+            Hudson hudson = Hudson.getInstance();
+            FilePath hudsonRoot = hudson.getRootPath();
+            FilePath fp = new FilePath(hudsonRoot, value);
+
+            try {
+                if (!fp.exists())
+                    return FormValidation.error("Does not exist.");
+            } catch (java.lang.InterruptedException e) {
             }
         	return FormValidation.ok();
         }
