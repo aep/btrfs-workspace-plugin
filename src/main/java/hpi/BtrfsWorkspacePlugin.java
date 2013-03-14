@@ -9,6 +9,7 @@ import hudson.model.Build;
 import hudson.model.BuildListener;
 import hudson.model.Hudson;
 import hudson.model.Descriptor;
+import hudson.model.Result;
 import hudson.tasks.BuildWrapper;
 import hudson.tasks.BuildWrapperDescriptor;
 import hudson.util.FormValidation;
@@ -28,14 +29,16 @@ import org.kohsuke.stapler.QueryParameter;
 public class BtrfsWorkspacePlugin extends BuildWrapper {
     private String baseVolume;
     private boolean destroyAfterBuild;
+    private boolean copyBackAfterBuild;
     private String[] copiedFiles;
 
     private static final Logger log = Logger.getLogger(BtrfsWorkspacePlugin.class.getName());
 
     @DataBoundConstructor
-    public BtrfsWorkspacePlugin(String baseVolume, boolean destroyAfterBuild) {
+    public BtrfsWorkspacePlugin(String baseVolume, boolean destroyAfterBuild, boolean copyBackAfterBuild) {
         this.baseVolume = baseVolume;
         this.destroyAfterBuild = destroyAfterBuild;
+        this.copyBackAfterBuild = copyBackAfterBuild;
     }
 
     public String getBaseVolume() {
@@ -46,6 +49,10 @@ public class BtrfsWorkspacePlugin extends BuildWrapper {
         return destroyAfterBuild;
     }
 
+    public boolean getCopyBackAfterBuild() {
+        return copyBackAfterBuild;
+    }
+
     @Override
     public Environment setUp(AbstractBuild build, final Launcher launcher,
             BuildListener listener) throws IOException, InterruptedException {
@@ -54,6 +61,19 @@ public class BtrfsWorkspacePlugin extends BuildWrapper {
             @Override
             public boolean tearDown(AbstractBuild build, BuildListener listener)
             throws IOException, InterruptedException {
+
+            if (copyBackAfterBuild) {
+                if (build.getResult() == Result.SUCCESS
+                        // https://issues.jenkins-ci.org/browse/JENKINS-2485
+                        || build.getResult() == null) {
+                    Hudson hudson = Hudson.getInstance();
+                    FilePath hudsonRoot = hudson.getRootPath();
+                    FilePath copyFrom = new FilePath(hudsonRoot, baseVolume);
+                    FilePath projectWorkspace = build.getWorkspace();
+                    launcher.launch().cmds("btrfs", "subvolume", "delete", copyFrom.toString()).join();
+                    launcher.launch().cmds("btrfs", "subvolume", "snapshot", "-r", projectWorkspace.toString(), copyFrom.toString()).join();
+                        }
+            }
             if (destroyAfterBuild) {
                 FilePath projectWorkspace = build.getWorkspace();
                 launcher.launch().cmds("btrfs", "subvolume", "delete", projectWorkspace.toString()).join();
@@ -77,8 +97,8 @@ public class BtrfsWorkspacePlugin extends BuildWrapper {
         //maybe a leftover
         launcher.launch().cmds("btrfs", "subvolume", "delete", projectWorkspace.toString()).join();
 
-        //delete the directory
-        projectWorkspace.deleteRecursive();
+        //delete the (empty) directory
+        projectWorkspace.delete();
 
         int retcode = launcher.launch().cmds(
                 "btrfs", "subvolume", "snapshot", copyFrom.toString(), projectWorkspace.toString()

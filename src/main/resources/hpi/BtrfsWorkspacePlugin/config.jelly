@@ -6,4 +6,7 @@
 	<f:entry title="${%destroy workspace after build}" field="destroyAfterBuild">
 		<f:checkbox/>
 	</f:entry>
+    <f:entry title="${%after successful build, make the original subvolume a snapshot of this workspace}" field="copyBackAfterBuild">^M
+        <f:checkbox/>^M
+    </f:entry>^M
 </j:jelly>
