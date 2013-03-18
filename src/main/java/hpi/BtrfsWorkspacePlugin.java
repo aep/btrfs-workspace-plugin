@@ -71,7 +71,7 @@ public class BtrfsWorkspacePlugin extends BuildWrapper {
                     FilePath copyFrom = new FilePath(hudsonRoot, baseVolume);
                     FilePath projectWorkspace = build.getWorkspace();
                     launcher.launch().cmds("btrfs", "subvolume", "delete", copyFrom.toString()).join();
-                    launcher.launch().cmds("btrfs", "subvolume", "snapshot", "-r", projectWorkspace.toString(), copyFrom.toString()).join();
+                    launcher.launch().cmds("btrfs", "subvolume", "snapshot", projectWorkspace.toString(), copyFrom.toString()).join();
                         }
             }
             if (destroyAfterBuild) {
