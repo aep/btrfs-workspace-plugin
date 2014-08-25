@@ -4,6 +4,8 @@ Jenkins plugin: btrfs-workspace
 
 This is a note for compile the 'Jenkins plugin: btrfs-workspace'.
 
+How to compile
+===============
 
 1. Install the maven package on Ubuntu.
 
@@ -23,11 +25,11 @@ This is a note for compile the 'Jenkins plugin: btrfs-workspace'.
   Default locale: en_US, platform encoding: UTF-8
   OS name: "linux", version: "3.13.0-34-generic", arch: "amd64", family: "unix
 
-3. Compile plugin of **Clone workspace from BTRFS snapshot** .
+3. Compile plugin of **Clone workspace from BTRFS snapshot** with debug mode. [1]_
 
 ::
 
-  mvn -X install
+  $ mvn -X install
   [...]
   [INFO] ------------------------------------------------------------------------
   [INFO] BUILD SUCCESS
@@ -44,3 +46,9 @@ This is a note for compile the 'Jenkins plugin: btrfs-workspace'.
   $ find -name 'btrfs-workspace-plugin.hpi' -type f
   ./target/btrfs-workspace-plugin.hpi
 
+Reference
+==========
+
+- `Plugin tutorial | Jenkins Wiki <https://wiki.jenkins-ci.org/display/JENKINS/Plugin+tutorial#Plugintutorial-Eclipse>`_
+
+.. [1] You can try the ``mvn install``, but it\`s no work with me.
